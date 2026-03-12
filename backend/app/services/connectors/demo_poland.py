@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from app.models import SourceType
 from app.services.connectors.base import ParcelConnector, ParcelResolutionResult
 
 
@@ -38,6 +39,7 @@ class DemoPolandParcelConnector(ParcelConnector):
                     "MULTIPOLYGON(((21.0 52.22,21.02 52.22,21.02 52.24,21.0 52.24,21.0 52.22)))"
                 ),
                 source_name=self.connector_name,
+                source_type=SourceType.DEMO,
                 confidence=0.55,
                 source_reference="Demo fallback dataset for local development",
             )
@@ -57,7 +59,7 @@ class DemoPolandParcelConnector(ParcelConnector):
             bounding_box=item["bounding_box"],
             geometry_wkt=item["geometry_wkt"],
             source_name=self.connector_name,
+            source_type=SourceType.DEMO,
             confidence=0.85,
             source_reference=item["source_reference"],
         )
-

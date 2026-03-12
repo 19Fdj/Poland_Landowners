@@ -1,7 +1,7 @@
 import re
 
 PARCEL_ID_PATTERN = re.compile(
-    r"^(?P<terc>\d{6})_(?P<obr>\d\.\d{4})\.(?P<parcel>\d+(?:/\d+)?)$"
+    r"^(?P<terc>\d{6})_(?P<section>\d\.\d{4}(?:\.AR_\d+)?)\.(?P<parcel>[A-Z0-9]+(?:/[A-Z0-9]+)?)$"
 )
 
 
@@ -22,4 +22,3 @@ def validate_parcel_identifier(value: str) -> list[str]:
             "Expected format like 141201_2.0003.45/6 (TERC_obreb.parcel-number)."
         )
     return errors
-

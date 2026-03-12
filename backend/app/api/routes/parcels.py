@@ -17,12 +17,12 @@ from app.schemas.parcel import (
     ParcelValidateItem,
     ParcelValidationResult,
 )
-from app.services.connectors.demo_poland import DemoPolandParcelConnector
+from app.services.connectors.factory import get_parcel_connector
 from app.services.parcel_service import create_import_job, get_parcel_or_404, list_parcels, resolve_and_upsert_parcel
 from app.services.parcel_validation import normalize_parcel_identifier, validate_parcel_identifier
 
 router = APIRouter()
-connector = DemoPolandParcelConnector()
+connector = get_parcel_connector()
 
 
 @router.post("/validate", response_model=list[ParcelValidationResult])
@@ -101,5 +101,5 @@ def refresh_parcel(
         parcel_id=parcel_id,
         refreshed_at=datetime.now(UTC),
         source=connector.connector_name,
-        confidence=0.85 if settings.demo_mode else 0.5,
+        confidence=0.9 if connector.connector_name == "gugik_uldk" else 0.6,
     )

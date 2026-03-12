@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Protocol
 
+from app.models import SourceType
+
 
 @dataclass
 class ParcelResolutionResult:
@@ -17,6 +19,7 @@ class ParcelResolutionResult:
     bounding_box: dict[str, float] | None
     geometry_wkt: str | None
     source_name: str
+    source_type: SourceType
     confidence: float
     source_reference: str
 
@@ -25,4 +28,3 @@ class ParcelConnector(Protocol):
     connector_name: str
 
     def resolve(self, normalized_identifier: str) -> ParcelResolutionResult: ...
-

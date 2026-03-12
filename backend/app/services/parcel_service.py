@@ -129,7 +129,7 @@ def resolve_and_upsert_parcel(
             SourceObservation(
                 parcel=parcel,
                 source_name=resolved.source_name,
-                source_type=SourceType.DEMO,
+                source_type=resolved.source_type,
                 field_name=field_name,
                 field_value=str(value),
                 confidence=resolved.confidence,

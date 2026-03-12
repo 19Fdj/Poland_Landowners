@@ -44,17 +44,23 @@ Demo login seed:
 
 ## What is mocked
 
-- Official cadastral resolution currently uses `DemoPolandParcelConnector`.
+- Official cadastral resolution can use the public GUGiK `ULDK` service, with demo fallback available for development.
 - Export generation is represented by job metadata rather than a full file worker.
 - Document upload persists metadata, not binary file storage.
 - Frontend falls back to local demo data when the backend is unavailable.
 
 ## What needs real credentials or legal review
 
-- Live cadastral/public geospatial connectors and their rate limits.
+- Production review of live cadastral/public geospatial connectors, their rate limits, and acceptable call patterns.
 - Production auth hardening, email delivery, and secure secret management.
 - Final GDPR retention policy, DPA review, and ownership-data lawful-basis process.
 - Storage policy for uploaded evidence files and screenshots.
+
+## Real public cadastral source currently wired
+
+- `ULDK` by GUGiK: public parcel location service used to resolve geometry from Polish parcel identifiers.
+- The app stores only parcel geometry and public administrative metadata from that source.
+- Ownership data remains separate and must still come from lawful public or user-supplied evidence.
 
 ## Testing
 

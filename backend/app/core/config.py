@@ -21,6 +21,9 @@ class Settings(BaseSettings):
         default="This tool supports lawful due diligence only.",
         alias="LEGAL_DISCLAIMER_TEXT",
     )
+    parcel_connector: str = Field(default="auto", alias="PARCEL_CONNECTOR")
+    uldk_base_url: str = Field(default="https://uldk.gugik.gov.pl", alias="ULDK_BASE_URL")
+    uldk_timeout_seconds: float = Field(default=20.0, alias="ULDK_TIMEOUT_SECONDS")
     map_style_url: str = Field(
         default="https://demotiles.maplibre.org/style.json",
         alias="MAP_STYLE_URL",
