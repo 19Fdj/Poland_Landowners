@@ -1,0 +1,42 @@
+[
+  {
+    "normalized_identifier": "141201_2.0003.45/6",
+    "voivodeship": "mazowieckie",
+    "powiat": "powiat plocki",
+    "gmina": "Drobin",
+    "obreb": "0003",
+    "parcel_number": "45/6",
+    "area_m2": 18234.0,
+    "land_use_classification": "RIIIb",
+    "centroid_lat": 52.7343,
+    "centroid_lon": 19.9894,
+    "bounding_box": {
+      "min_lon": 19.9879,
+      "min_lat": 52.7334,
+      "max_lon": 19.9911,
+      "max_lat": 52.7351
+    },
+    "geometry_wkt": "MULTIPOLYGON(((19.9879 52.7334,19.9911 52.7334,19.9911 52.7351,19.9879 52.7351,19.9879 52.7334)))",
+    "source_reference": "Demo parcel dataset derived from synthetic sample data"
+  },
+  {
+    "normalized_identifier": "301105_5.0012.144",
+    "voivodeship": "wielkopolskie",
+    "powiat": "powiat slupecki",
+    "gmina": "Orchowo",
+    "obreb": "0012",
+    "parcel_number": "144",
+    "area_m2": 41200.0,
+    "land_use_classification": "RIVa",
+    "centroid_lat": 52.5159,
+    "centroid_lon": 18.0392,
+    "bounding_box": {
+      "min_lon": 18.0381,
+      "min_lat": 52.5146,
+      "max_lon": 18.0402,
+      "max_lat": 52.5173
+    },
+    "geometry_wkt": "MULTIPOLYGON(((18.0381 52.5146,18.0402 52.5146,18.0402 52.5173,18.0381 52.5173,18.0381 52.5146)))",
+    "source_reference": "Demo parcel dataset derived from synthetic sample data"
+  }
+]

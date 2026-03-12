@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: poland-landowners-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: poland-landowners-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: poland-landowners-redis
+          property: connectionString
+      - key: SECRET_KEY
+        sync: false
+      - key: BACKEND_CORS_ORIGINS
+        value: https://poland-landowners.vercel.app
+      - key: DEMO_MODE
+        value: "true"
+      - key: MAP_STYLE_URL
+        value: https://demotiles.maplibre.org/style.json
+      - key: LEGAL_DISCLAIMER_TEXT
+        value: This tool supports lawful due diligence only. Users must confirm a valid legal basis before processing personal data.
+
+  - type: redis
+    name: poland-landowners-redis
+    ipAllowList: []
+
+databases:
+  - name: poland-landowners-db
+    databaseName: poland_landfinder
+    user: poland_landfinder
+
