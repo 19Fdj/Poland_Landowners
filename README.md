@@ -76,6 +76,11 @@ Required GitHub repository secrets for deployment:
 - `VERCEL_PROJECT_ID`: from the Vercel project settings
 - `RENDER_DEPLOY_HOOK_URL`: from the Render service deploy hook settings
 
+Render note:
+
+- `RENDER_DEPLOY_HOOK_URL` must be the deploy hook endpoint generated inside Render service settings.
+- A normal service URL such as `https://poland-landowners.onrender.com` is not a deploy hook and will not trigger deployments.
+
 Required production environment variables:
 
 - Backend:
