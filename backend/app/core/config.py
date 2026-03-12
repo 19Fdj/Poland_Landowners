@@ -1,6 +1,7 @@
 from functools import lru_cache
+from typing import Any
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +23,23 @@ class Settings(BaseSettings):
         alias="MAP_STYLE_URL",
     )
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_database_url(cls, value: Any) -> Any:
+        if isinstance(value, str) and value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+psycopg://", 1)
+        return value
+
+    @field_validator("backend_cors_origins", mode="before")
+    @classmethod
+    def normalize_cors_origins(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped.startswith("["):
+                return value
+            return [item.strip() for item in stripped.split(",") if item.strip()]
+        return value
+
 
 @lru_cache
 def get_settings() -> Settings:
@@ -29,4 +47,3 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-
