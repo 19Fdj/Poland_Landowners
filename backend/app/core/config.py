@@ -12,7 +12,10 @@ class Settings(BaseSettings):
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
     secret_key: str = Field(default="change-me", alias="SECRET_KEY")
     access_token_expire_minutes: int = Field(default=60, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
-    backend_cors_origins: list[str] = Field(default=["http://localhost:3000"], alias="BACKEND_CORS_ORIGINS")
+    backend_cors_origins_raw: str = Field(
+        default="http://localhost:3000",
+        alias="BACKEND_CORS_ORIGINS",
+    )
     demo_mode: bool = Field(default=True, alias="DEMO_MODE")
     legal_disclaimer_text: str = Field(
         default="This tool supports lawful due diligence only.",
@@ -30,15 +33,15 @@ class Settings(BaseSettings):
             return value.replace("postgresql://", "postgresql+psycopg://", 1)
         return value
 
-    @field_validator("backend_cors_origins", mode="before")
-    @classmethod
-    def normalize_cors_origins(cls, value: Any) -> Any:
-        if isinstance(value, str):
-            stripped = value.strip()
-            if stripped.startswith("["):
-                return value
-            return [item.strip() for item in stripped.split(",") if item.strip()]
-        return value
+    @property
+    def backend_cors_origins(self) -> list[str]:
+        stripped = self.backend_cors_origins_raw.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            inner = stripped[1:-1].strip()
+            if not inner:
+                return []
+            return [item.strip().strip("\"'") for item in inner.split(",") if item.strip()]
+        return [item.strip() for item in stripped.split(",") if item.strip()]
 
 
 @lru_cache
