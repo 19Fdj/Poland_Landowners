@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { KPIGrid } from "@/components/kpi-grid";
+import { ParcelSearchPanel } from "@/components/parcel-search-panel";
 import { ParcelTable } from "@/components/parcel-table";
 import { getDashboardData, getParcels } from "@/lib/api";
 
@@ -29,6 +30,8 @@ export default async function DashboardPage() {
       </section>
 
       <KPIGrid items={dashboard.kpis} />
+
+      <ParcelSearchPanel parcels={parcels} title="Search and validate parcels" />
 
       <div className="detailGrid">
         <div className="panel">
@@ -64,4 +67,3 @@ export default async function DashboardPage() {
     </>
   );
 }
-

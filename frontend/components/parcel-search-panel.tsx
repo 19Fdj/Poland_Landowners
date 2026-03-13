@@ -1,0 +1,217 @@
+"use client";
+
+import type { Route } from "next";
+import Link from "next/link";
+import type { ChangeEvent } from "react";
+import { useMemo, useState } from "react";
+
+import type { Parcel } from "@/lib/types";
+
+type ParcelValidationResult = {
+  original: string;
+  normalized: string | null;
+  valid: boolean;
+  errors: string[];
+};
+
+type Props = {
+  parcels: Parcel[];
+  title?: string;
+  compact?: boolean;
+};
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
+
+export function ParcelSearchPanel({
+  parcels,
+  title = "Parcel search",
+  compact = false
+}: Props) {
+  const [singleValue, setSingleValue] = useState("");
+  const [bulkValue, setBulkValue] = useState("");
+  const [results, setResults] = useState<ParcelValidationResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const parcelByIdentifier = useMemo(
+    () => new Map(parcels.map((parcel) => [parcel.normalized_identifier, parcel])),
+    [parcels]
+  );
+
+  async function validateIdentifiers(values: string[]) {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/parcels/validate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(values.map((value) => ({ value })))
+      });
+
+      if (!response.ok) {
+        throw new Error("The validation service is unavailable right now.");
+      }
+
+      const payload = (await response.json()) as ParcelValidationResult[];
+      setResults(payload);
+    } catch (caughtError) {
+      const message =
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unexpected validation error.";
+      setError(message);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSingleSearch() {
+    const value = singleValue.trim();
+    if (!value) {
+      setError("Enter at least one parcel identifier.");
+      setResults([]);
+      return;
+    }
+    await validateIdentifiers([value]);
+  }
+
+  async function handleBulkSearch() {
+    const values = splitIdentifiers(bulkValue);
+    if (!values.length) {
+      setError("Paste one or more parcel identifiers to validate.");
+      setResults([]);
+      return;
+    }
+    await validateIdentifiers(values);
+  }
+
+  async function handleFileUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    const text = await file.text();
+    const values = splitIdentifiers(text);
+    setBulkValue(values.join("\n"));
+    if (values.length) {
+      await validateIdentifiers(values);
+    } else {
+      setError("No parcel identifiers were found in the uploaded file.");
+    }
+  }
+
+  const validCount = results.filter((item) => item.valid).length;
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <h2>{title}</h2>
+          <p className="muted">
+            Search one parcel, validate a pasted batch, or upload a CSV/TXT file of identifiers.
+          </p>
+        </div>
+      </div>
+
+      <div className={compact ? "stack" : "searchGrid"}>
+        <div className="stack">
+          <div className="field">
+            <label htmlFor="single-search">Single parcel identifier</label>
+            <input
+              id="single-search"
+              placeholder="141201_2.0003.45/6"
+              value={singleValue}
+              onChange={(event) => setSingleValue(event.target.value)}
+            />
+          </div>
+          <button type="button" className="button primaryButton" onClick={handleSingleSearch} disabled={loading}>
+            {loading ? "Searching..." : "Search parcel"}
+          </button>
+        </div>
+
+        <div className="stack">
+          <div className="field">
+            <label htmlFor="bulk-search">Bulk paste</label>
+            <textarea
+              id="bulk-search"
+              placeholder={"141201_2.0003.45/6\n301105_5.0012.144"}
+              value={bulkValue}
+              onChange={(event) => setBulkValue(event.target.value)}
+            />
+          </div>
+          <div className="buttonRow">
+            <button type="button" className="button primaryButton" onClick={handleBulkSearch} disabled={loading}>
+              {loading ? "Validating..." : "Validate batch"}
+            </button>
+            <label className="button secondary fileButton">
+              Upload CSV/TXT
+              <input type="file" accept=".csv,.txt" onChange={handleFileUpload} hidden />
+            </label>
+            <Link href={"/imports" as Route} className="button secondary">
+              Open import workspace
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {error ? <div className="banner">{error}</div> : null}
+
+      {results.length ? (
+        <div className="stack">
+          <div className="resultSummary">
+            <strong>{validCount}</strong>
+            <span>of {results.length} identifiers are valid</span>
+          </div>
+
+          <div className="list">
+            {results.map((result) => {
+              const matchedParcel = result.normalized
+                ? parcelByIdentifier.get(result.normalized)
+                : undefined;
+              return (
+                <div key={result.original} className="resultCard">
+                  <div className="resultRow">
+                    <div>
+                      <strong>{result.original}</strong>
+                      <p className="muted">
+                        {result.valid
+                          ? `Normalized as ${result.normalized}`
+                          : result.errors.join(" ")}
+                      </p>
+                    </div>
+                    <span className={`pill ${result.valid ? "pillGood" : "pillBad"}`}>
+                      {result.valid ? "valid" : "invalid"}
+                    </span>
+                  </div>
+                  {matchedParcel ? (
+                    <Link
+                      href={`/parcels/${matchedParcel.id}` as Route}
+                      className="button secondary inlineButton"
+                    >
+                      Open parcel record
+                    </Link>
+                  ) : result.valid ? (
+                    <p className="muted">
+                      Identifier is valid. No parcel record is stored yet; import it to enrich and track it.
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function splitIdentifiers(input: string): string[] {
+  return input
+    .split(/[\n,;\t]+/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+}

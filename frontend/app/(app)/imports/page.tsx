@@ -1,4 +1,9 @@
-export default function ImportsPage() {
+import { ParcelSearchPanel } from "@/components/parcel-search-panel";
+import { getParcels } from "@/lib/api";
+
+export default async function ImportsPage() {
+  const parcels = await getParcels();
+
   return (
     <>
       <section className="hero">
@@ -14,6 +19,8 @@ export default function ImportsPage() {
           <p>Only import ownership-related columns if they come from lawful public or user-supplied records.</p>
         </div>
       </section>
+
+      <ParcelSearchPanel parcels={parcels} title="Validate before import" compact />
 
       <section className="panel">
         <div className="panelHeader">
@@ -42,4 +49,3 @@ export default function ImportsPage() {
     </>
   );
 }
-

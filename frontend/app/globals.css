@@ -151,10 +151,18 @@ a {
   color: #f5efe0;
 }
 
+.primaryButton {
+  border: 0;
+}
+
 .button.secondary {
   color: var(--text);
   background: var(--panel-strong);
   border-color: var(--line);
+}
+
+.inlineButton {
+  width: fit-content;
 }
 
 .kpiGrid {
@@ -212,6 +220,12 @@ a {
   grid-template-columns: 1.2fr 0.8fr;
 }
 
+.searchGrid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 0.9fr 1.1fr;
+}
+
 .stack {
   display: grid;
   gap: 16px;
@@ -252,6 +266,41 @@ a {
   gap: 16px;
   padding: 12px 0;
   border-bottom: 1px solid var(--line);
+}
+
+.resultSummary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.resultSummary strong {
+  font-size: 1.8rem;
+}
+
+.resultCard {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.resultRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pillGood {
+  color: var(--good);
+}
+
+.pillBad {
+  color: var(--danger);
+}
+
+.fileButton {
+  cursor: pointer;
 }
 
 .form,
@@ -295,4 +344,3 @@ textarea {
     border-bottom: 1px solid var(--line);
   }
 }
-
