@@ -149,10 +149,24 @@ a {
   justify-content: center;
   min-height: 44px;
   color: #f5efe0;
+  font-weight: 700;
 }
 
 .primaryButton {
-  border: 0;
+  border: 1px solid rgba(17, 43, 29, 0.22);
+  background: linear-gradient(135deg, #23452f 0%, #3f6f4d 100%);
+  box-shadow: 0 16px 30px rgba(35, 69, 47, 0.22);
+  color: #fffdf7;
+}
+
+.primaryButton:hover {
+  background: linear-gradient(135deg, #1d3a28 0%, #345e42 100%);
+}
+
+.primaryButton:focus-visible,
+.button.secondary:focus-visible {
+  outline: 3px solid rgba(38, 77, 54, 0.25);
+  outline-offset: 2px;
 }
 
 .button.secondary {
