@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Any
 
@@ -26,6 +28,18 @@ class ParcelImportRow(BaseModel):
 
 class ParcelImportRequest(BaseModel):
     rows: list[ParcelImportRow]
+
+
+class ParcelResolveItem(BaseModel):
+    identifier: str
+
+
+class ParcelResolveResponse(BaseModel):
+    original: str
+    valid: bool
+    normalized: str | None = None
+    error: str | None = None
+    parcel: ParcelRead | None = None
 
 
 class SourceObservationRead(ORMModel):

@@ -13,6 +13,8 @@ from app.schemas.parcel import (
     ParcelImportRequest,
     ParcelListResponse,
     ParcelRead,
+    ParcelResolveItem,
+    ParcelResolveResponse,
     ParcelRefreshResponse,
     ParcelValidateItem,
     ParcelValidationResult,
@@ -37,6 +39,48 @@ def validate_parcels(payload: list[ParcelValidateItem]) -> list[ParcelValidation
                 normalized=None if errors else normalized,
                 valid=not errors,
                 errors=errors,
+            )
+        )
+    return results
+
+
+@router.post("/resolve", response_model=list[ParcelResolveResponse])
+def resolve_parcels(payload: list[ParcelResolveItem], db: Session = Depends(get_db)) -> list[ParcelResolveResponse]:
+    results: list[ParcelResolveResponse] = []
+    for item in payload:
+        normalized = normalize_parcel_identifier(item.identifier)
+        errors = validate_parcel_identifier(item.identifier)
+        if errors:
+            results.append(
+                ParcelResolveResponse(
+                    original=item.identifier,
+                    valid=False,
+                    normalized=None,
+                    error="; ".join(errors),
+                    parcel=None,
+                )
+            )
+            continue
+        try:
+            parcel = resolve_and_upsert_parcel(db, item.identifier, connector)
+        except Exception as exc:
+            results.append(
+                ParcelResolveResponse(
+                    original=item.identifier,
+                    valid=False,
+                    normalized=normalized,
+                    error=str(exc),
+                    parcel=None,
+                )
+            )
+            continue
+        results.append(
+            ParcelResolveResponse(
+                original=item.identifier,
+                valid=True,
+                normalized=normalized,
+                error=None,
+                parcel=ParcelRead.model_validate(parcel),
             )
         )
     return results

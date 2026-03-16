@@ -5,14 +5,7 @@ import Link from "next/link";
 import type { ChangeEvent } from "react";
 import { useMemo, useState } from "react";
 
-import type { Parcel } from "@/lib/types";
-
-type ParcelValidationResult = {
-  original: string;
-  normalized: string | null;
-  valid: boolean;
-  errors: string[];
-};
+import type { Parcel, ParcelResolveResult } from "@/lib/types";
 
 type Props = {
   parcels: Parcel[];
@@ -30,33 +23,56 @@ export function ParcelSearchPanel({
 }: Props) {
   const [singleValue, setSingleValue] = useState("");
   const [bulkValue, setBulkValue] = useState("");
-  const [results, setResults] = useState<ParcelValidationResult[]>([]);
+  const [results, setResults] = useState<ParcelResolveResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"search" | "validate">("search");
 
   const parcelByIdentifier = useMemo(
     () => new Map(parcels.map((parcel) => [parcel.normalized_identifier, parcel])),
     [parcels]
   );
 
-  async function validateIdentifiers(values: string[]) {
+  async function resolveIdentifiers(values: string[], nextMode: "search" | "validate") {
     setLoading(true);
     setError(null);
+    setMode(nextMode);
     try {
-      const response = await fetch(`${API_BASE_URL}/parcels/validate`, {
+      const endpoint = nextMode === "search" ? "/parcels/resolve" : "/parcels/validate";
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(values.map((value) => ({ value })))
+        body: JSON.stringify(
+          values.map((value) =>
+            nextMode === "search" ? { identifier: value } : { value }
+          )
+        )
       });
 
       if (!response.ok) {
         throw new Error("The validation service is unavailable right now.");
       }
 
-      const payload = (await response.json()) as ParcelValidationResult[];
-      setResults(payload);
+      const payload = (await response.json()) as
+        | ParcelResolveResult[]
+        | Array<{ original: string; normalized: string | null; valid: boolean; errors: string[] }>;
+      if (nextMode === "search") {
+        setResults(payload as ParcelResolveResult[]);
+      } else {
+        setResults(
+          (payload as Array<{ original: string; normalized: string | null; valid: boolean; errors: string[] }>).map(
+            (item) => ({
+              original: item.original,
+              normalized: item.normalized,
+              valid: item.valid,
+              error: item.errors.join(" "),
+              parcel: null
+            })
+          )
+        );
+      }
     } catch (caughtError) {
       const message =
         caughtError instanceof Error
@@ -76,17 +92,27 @@ export function ParcelSearchPanel({
       setResults([]);
       return;
     }
-    await validateIdentifiers([value]);
+    await resolveIdentifiers([value], "search");
   }
 
-  async function handleBulkSearch() {
+  async function handleBulkValidate() {
     const values = splitIdentifiers(bulkValue);
     if (!values.length) {
       setError("Paste one or more parcel identifiers to validate.");
       setResults([]);
       return;
     }
-    await validateIdentifiers(values);
+    await resolveIdentifiers(values, "validate");
+  }
+
+  async function handleBulkSearch() {
+    const values = splitIdentifiers(bulkValue);
+    if (!values.length) {
+      setError("Paste one or more parcel identifiers to search.");
+      setResults([]);
+      return;
+    }
+    await resolveIdentifiers(values, "search");
   }
 
   async function handleFileUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -98,7 +124,7 @@ export function ParcelSearchPanel({
     const values = splitIdentifiers(text);
     setBulkValue(values.join("\n"));
     if (values.length) {
-      await validateIdentifiers(values);
+      await resolveIdentifiers(values, "validate");
     } else {
       setError("No parcel identifiers were found in the uploaded file.");
     }
@@ -112,7 +138,7 @@ export function ParcelSearchPanel({
         <div>
           <h2>{title}</h2>
           <p className="muted">
-            Search one parcel, validate a pasted batch, or upload a CSV/TXT file of identifiers.
+            Search one parcel for real cadastral data, validate a pasted batch, or upload a CSV/TXT file of identifiers.
           </p>
         </div>
       </div>
@@ -129,7 +155,7 @@ export function ParcelSearchPanel({
             />
           </div>
           <button type="button" className="button primaryButton" onClick={handleSingleSearch} disabled={loading}>
-            {loading ? "Searching..." : "Search parcel"}
+            {loading && mode === "search" ? "Searching..." : "Search parcel"}
           </button>
         </div>
 
@@ -145,7 +171,10 @@ export function ParcelSearchPanel({
           </div>
           <div className="buttonRow">
             <button type="button" className="button primaryButton" onClick={handleBulkSearch} disabled={loading}>
-              {loading ? "Validating..." : "Validate batch"}
+              {loading && mode === "search" ? "Searching..." : "Search batch"}
+            </button>
+            <button type="button" className="button primaryButton" onClick={handleBulkValidate} disabled={loading}>
+              {loading && mode === "validate" ? "Validating..." : "Validate batch"}
             </button>
             <label className="button secondary fileButton">
               Upload CSV/TXT
@@ -180,14 +209,41 @@ export function ParcelSearchPanel({
                       <p className="muted">
                         {result.valid
                           ? `Normalized as ${result.normalized}`
-                          : result.errors.join(" ")}
+                          : result.error}
                       </p>
                     </div>
                     <span className={`pill ${result.valid ? "pillGood" : "pillBad"}`}>
                       {result.valid ? "valid" : "invalid"}
                     </span>
                   </div>
-                  {matchedParcel ? (
+                  {result.parcel ? (
+                    <div className="stack">
+                      <div className="miniGrid">
+                        <div>
+                          <strong>Location</strong>
+                          <p className="muted">
+                            {result.parcel.gmina ?? "Unknown gmina"}, {result.parcel.powiat ?? "Unknown powiat"}
+                          </p>
+                        </div>
+                        <div>
+                          <strong>Area</strong>
+                          <p className="muted">
+                            {result.parcel.area_m2
+                              ? `${result.parcel.area_m2.toLocaleString("en-US")} m2`
+                              : "Unavailable"}
+                          </p>
+                        </div>
+                        <div>
+                          <strong>Land use</strong>
+                          <p className="muted">{result.parcel.land_use_classification ?? "Unavailable"}</p>
+                        </div>
+                        <div>
+                          <strong>Source</strong>
+                          <p className="muted">{result.parcel.observations[0]?.source_name ?? "Stored record"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : matchedParcel ? (
                     <Link
                       href={`/parcels/${matchedParcel.id}` as Route}
                       className="button secondary inlineButton"
@@ -196,7 +252,7 @@ export function ParcelSearchPanel({
                     </Link>
                   ) : result.valid ? (
                     <p className="muted">
-                      Identifier is valid. No parcel record is stored yet; import it to enrich and track it.
+                      Identifier is valid. Use search to resolve and store its cadastral data.
                     </p>
                   ) : null}
                 </div>

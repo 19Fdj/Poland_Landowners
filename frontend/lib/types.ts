@@ -80,3 +80,10 @@ export type AuditLog = {
   created_at: string;
 };
 
+export type ParcelResolveResult = {
+  original: string;
+  valid: boolean;
+  normalized: string | null;
+  error: string | null;
+  parcel: Parcel | null;
+};
